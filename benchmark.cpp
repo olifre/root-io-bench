@@ -117,6 +117,7 @@ int main(int argc, char* argv[]) {
 	bool writeMode = false;
 	unsigned long seed = 42;
 	unsigned long events = 600000;
+	int compression = 1;
 
 	const struct option long_options[] = {
 		{"async-read",			no_argument,		nullptr,	longParameters::ASYNC_READ},
@@ -132,7 +133,7 @@ int main(int argc, char* argv[]) {
 	{
 		int opt = 0;
 		int option_index = 0;
-		while ((opt = getopt_long(argc, argv, "rws:e:", long_options, &option_index)) != -1) {
+		while ((opt = getopt_long(argc, argv, "rws:e:c:", long_options, &option_index)) != -1) {
 			switch (opt) {
 				case 'r': {
 					readMode = true;
@@ -187,6 +188,14 @@ int main(int argc, char* argv[]) {
 						exit(1);
 					}
 				}
+				case 'c': {
+					char *endptr;
+					compression = strtoul(optarg, &endptr, 10);
+					if (errno == ERANGE) {
+						perror("strtoul");
+						exit(1);
+					}
+				}
 				break;
 				default:
 					std::cerr << "Error in argument parsing!" << std::endl;
@@ -202,7 +211,7 @@ int main(int argc, char* argv[]) {
 
 	if (writeMode) {
 		timer.Start();
-		auto outFile = TFile::Open(filename, "RECREATE", "tree", 0);
+		auto outFile = TFile::Open(filename, "RECREATE", "tree", compression);
 		writeTree(seed, events, filename);
 		outFile->Close();
 		delete outFile;
