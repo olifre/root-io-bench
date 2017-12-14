@@ -1,4 +1,5 @@
 #include "TROOT.h"
+#include "TSystem.h"
 #include "TFile.h"
 #include "TTree.h"
 #include "TEnv.h"
@@ -108,6 +109,7 @@ namespace longParameters {
 		TREECACHE_PREFILL,
 		NO_TREECACHE_PREFILL,
 		TREECACHE_SIZE,
+		FORCE_REMOTE,
         };
 }
 
@@ -118,6 +120,7 @@ int main(int argc, char* argv[]) {
 	unsigned long seed = 42;
 	unsigned long events = 600000;
 	int compression = 1;
+	bool forceRemote = false;
 
 	const struct option long_options[] = {
 		{"async-read",			no_argument,		nullptr,	longParameters::ASYNC_READ},
@@ -127,6 +130,7 @@ int main(int argc, char* argv[]) {
 		{"treecache-prefill",		no_argument,		nullptr,	longParameters::TREECACHE_PREFILL},
 		{"no-treecache-prefill",	no_argument,		nullptr,	longParameters::NO_TREECACHE_PREFILL},
 		{"treecache-size",		required_argument,	nullptr,	longParameters::TREECACHE_SIZE},
+		{"force-remote",		no_argument,		nullptr,	longParameters::FORCE_REMOTE},
 		{nullptr,			0,			nullptr,	longParameters::NONE}
 	};
 
@@ -171,6 +175,10 @@ int main(int argc, char* argv[]) {
 					gEnv->SetValue("TTreeCache.Size", optarg);
 				}
 				break;
+				case longParameters::FORCE_REMOTE: {
+					forceRemote = true;
+				}
+				break;
 				case 's': {
 					char *endptr;
 					seed = strtoul(optarg, &endptr, 10);
@@ -205,7 +213,11 @@ int main(int argc, char* argv[]) {
 	}
 
 	TString filename;
-	filename.Form("test_%010lu.root", seed);
+	if (forceRemote) {
+		filename.Form("localhost://%s/test_%010lu.root", gSystem->WorkingDirectory(), seed);
+	} else {
+		filename.Form("test_%010lu.root", seed);
+	}
 
 	TStopwatch timer;
 
