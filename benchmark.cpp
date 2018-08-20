@@ -22,22 +22,22 @@ struct {
 	std::vector<UInt_t> indices;
 } treeData;
 
-void writeTree(int seed, unsigned int events, TString rootFileName) {
+void writeTree(int seed, unsigned int events, TString rootFileName, unsigned int branchBufferSize) {
 	TRandom3 rnd(seed);
 
 	auto tree = new TTree("t", "t");
 
-	tree->Branch("event", &(treeData.event), "event/i");
+	tree->Branch("event", &(treeData.event), "event/i", branchBufferSize);
 
-	tree->Branch("energy", &(treeData.energy), "energy/D");
+	tree->Branch("energy", &(treeData.energy), "energy/D", branchBufferSize);
 
 	treeData.times.resize(2000);
-	tree->Branch("nTimes", &(treeData.nTimes), "nTimes/i");
-	tree->Branch("times", treeData.times.data(), "times[nTimes]/D");
+	tree->Branch("nTimes", &(treeData.nTimes), "nTimes/i", branchBufferSize);
+	tree->Branch("times", treeData.times.data(), "times[nTimes]/D", branchBufferSize);
 
 	treeData.indices.resize(2000);
-	tree->Branch("nIndices", &(treeData.nIndices), "nIndices/i");
-	tree->Branch("indices", treeData.indices.data(), "indices[nIndices]/i");
+	tree->Branch("nIndices", &(treeData.nIndices), "nIndices/i", branchBufferSize);
+	tree->Branch("indices", treeData.indices.data(), "indices[nIndices]/i", branchBufferSize);
 
 	for (unsigned int i=0; i<events; ++i) {
 		treeData.event = i;
@@ -110,6 +110,7 @@ namespace longParameters {
 		NO_TREECACHE_PREFILL,
 		TREECACHE_SIZE,
 		FORCE_REMOTE,
+		BRANCH_BUFFER_SIZE,
         };
 }
 
@@ -119,6 +120,7 @@ int main(int argc, char* argv[]) {
 	bool writeMode = false;
 	unsigned long seed = 42;
 	unsigned long events = 600000;
+	unsigned long branchBufferSize = 32000;
 	int compression = 1;
 	bool forceRemote = false;
 
@@ -131,6 +133,7 @@ int main(int argc, char* argv[]) {
 		{"no-treecache-prefill",	no_argument,		nullptr,	longParameters::NO_TREECACHE_PREFILL},
 		{"treecache-size",		required_argument,	nullptr,	longParameters::TREECACHE_SIZE},
 		{"force-remote",		no_argument,		nullptr,	longParameters::FORCE_REMOTE},
+		{"branch-buffer-size",		required_argument,	nullptr,	longParameters::BRANCH_BUFFER_SIZE},
 		{nullptr,			0,			nullptr,	longParameters::NONE}
 	};
 
@@ -178,6 +181,14 @@ int main(int argc, char* argv[]) {
 				case longParameters::FORCE_REMOTE: {
 					forceRemote = true;
 				}
+				case longParameters::BRANCH_BUFFER_SIZE: {
+					char *endptr;
+					branchBufferSize = strtoul(optarg, &endptr, 10);
+					if (errno == ERANGE) {
+						perror("strtoul");
+						exit(1);
+					}
+				}
 				break;
 				case 's': {
 					char *endptr;
@@ -224,7 +235,7 @@ int main(int argc, char* argv[]) {
 	if (writeMode) {
 		timer.Start();
 		auto outFile = TFile::Open(filename, "RECREATE", "tree", compression);
-		writeTree(seed, events, filename);
+		writeTree(seed, events, filename, branchBufferSize);
 		outFile->Close();
 		delete outFile;
 		timer.Stop();
