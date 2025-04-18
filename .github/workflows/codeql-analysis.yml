@@ -47,6 +47,10 @@ jobs:
     #- name: Autobuild
     #  uses: github/codeql-action/autobuild@v1
     
+    - name: Install ROOT dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get -y install libtbb12
     - name: Download ROOT
       run: |
         wget --no-verbose https://root.cern/download/root_v6.34.08.Linux-ubuntu24.04-x86_64-gcc13.3.tar.gz
