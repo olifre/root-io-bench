@@ -19,8 +19,9 @@ jobs:
         sudo apt-get -y install libtbb12
     - name: Download ROOT
       run: |
-        wget --no-verbose https://root.cern/download/root_v6.34.08.Linux-ubuntu24.04-x86_64-gcc13.3.tar.gz
-        tar xf root_*.tar.gz
+        TARBALL=root_v6.34.08.Linux-ubuntu24.04-x86_64-gcc13.3.tar.gz
+        wget --no-verbose https://root.cern/download/${TARBALL}
+        tar -xzvf ${TARBALL}
     - name: make
       run: |
         source root/bin/thisroot.sh
